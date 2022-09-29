@@ -1,9 +1,9 @@
 output "client_id" {
-  value = azuread_application.this.id
+  value = azuread_application.this.application_id
 }
 
 output "tenant_id" {
-  value = azuread_application.this
+  value = data.azuread_client_config.current.tenant_id
 }
 
 output "secret_value" {

@@ -19,6 +19,7 @@ resource "azurerm_resource_group" "this" {
 resource "azuread_application" "this" {
   display_name            = "cyberhaven_app"
   group_membership_claims = []
+  owners                  = [data.azuread_client_config.current.object_id]
 }
 
 resource "azuread_application_password" "this" {
@@ -40,14 +41,14 @@ resource "azurerm_storage_container" "container" {
   container_access_type = "private"
 }
 
-resource "azurerm_role_assignment" "writer" {
-  scope              = azurerm_resource_group.this.id
-  role_definition_id = split("|", azurerm_role_definition.writer.id)[0]
-  principal_id       = azuread_application.this.id
-}
+# resource "azurerm_role_assignment" "writer" {
+#   scope              = azurerm_resource_group.this.id
+#   role_definition_id = split("|", azurerm_role_definition.writer.id)[0]
+#   principal_id       = azuread_application.this.application_id
+# }
 
 resource "azurerm_role_assignment" "reader" {
   scope              = azurerm_resource_group.this.id
   role_definition_id = split("|", azurerm_role_definition.reader.id)[0]
-  principal_id       = azuread_application.this.id
+  principal_id       = azuread_application.this.application_id
 }
