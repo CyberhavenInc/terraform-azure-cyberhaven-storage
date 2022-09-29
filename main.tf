@@ -1,8 +1,3 @@
-variable "subscription_id" {
-  type    = string
-  default = "8e7e4ee0-b091-4724-bf16-123d5a1a48f3"
-
-}
 data "azuread_client_config" "current" {
 }
 data "azurerm_client_config" "current" {
@@ -22,8 +17,19 @@ resource "azuread_application" "this" {
   owners                  = [data.azuread_client_config.current.object_id]
 }
 
-resource "azuread_application_password" "this" {
-  application_object_id = azuread_application.this.object_id
+resource "azuread_service_principal" "this" {
+  application_id               = azuread_application.this.application_id
+  app_role_assignment_required = false
+  owners                       = [data.azuread_client_config.current.object_id]
+
+  feature_tags {
+    enterprise = true
+    gallery    = false
+  }
+}
+
+resource "azuread_service_principal_password" "this" {
+  service_principal_id = azuread_service_principal.this.object_id
 }
 
 
@@ -41,14 +47,15 @@ resource "azurerm_storage_container" "container" {
   container_access_type = "private"
 }
 
-# resource "azurerm_role_assignment" "writer" {
-#   scope              = azurerm_resource_group.this.id
-#   role_definition_id = split("|", azurerm_role_definition.writer.id)[0]
-#   principal_id       = azuread_application.this.application_id
-# }
+resource "azurerm_role_assignment" "writer" {
+  scope              = azurerm_resource_group.this.id
+  role_definition_id = split("|", azurerm_role_definition.writer.id)[0]
+  principal_id       = azuread_service_principal.this.id
+}
 
 resource "azurerm_role_assignment" "reader" {
+  count              = var.allow_read ? 1 : 0
   scope              = azurerm_resource_group.this.id
   role_definition_id = split("|", azurerm_role_definition.reader.id)[0]
-  principal_id       = azuread_application.this.application_id
+  principal_id       = azuread_service_principal.this.id
 }
